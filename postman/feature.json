@@ -1,0 +1,2460 @@
+{
+  "info": {
+    "name": "Comments API Tests",
+    "description": "Тесты для API комментариев",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "admin",
+      "description": "Административные эндпоинты для управления комментариями",
+      "item": [
+        {
+          "name": "PATCH /admin/comments/{commentId} - Успешная модерация публикация",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/{{pendingCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "{{pendingCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for moderation ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('pendingCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Comment status changed to PUBLISHED\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal(\"PUBLISHED\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/comments/{commentId} - Успешная модерация отклонение",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"REJECTED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/{{rejectionCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "{{rejectionCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for rejection ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('rejectionCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Comment status changed to REJECTED\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal(\"REJECTED\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/comments/{commentId} - Неверный статус для модерации",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PENDING\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/{{invalidStatusCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "{{invalidStatusCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for invalid status ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('invalidStatusCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Error message indicates invalid status\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"Invalid status for moderation\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/comments/{commentId} - Комментарий уже промодерирован",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/{{alreadyModeratedCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "{{alreadyModeratedCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for already moderated ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                const commentId = commentResponse.json().id;",
+                  "                                pm.sendRequest({",
+                  "                                    url: pm.collectionVariables.get('baseUrl') + '/admin/comments/' + commentId,",
+                  "                                    method: 'PATCH',",
+                  "                                    header: { 'Content-Type': 'application/json' },",
+                  "                                    body: {",
+                  "                                        mode: 'raw',",
+                  "                                        raw: JSON.stringify({ status: 'PUBLISHED' })",
+                  "                                    }",
+                  "                                }, function () {",
+                  "                                    pm.variables.set('alreadyModeratedCommentId', commentId);",
+                  "                                    pm.variables.set('testData', {",
+                  "                                        categoryId: categoryId,",
+                  "                                        userId: userId,",
+                  "                                        eventId: eventId",
+                  "                                    });",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test(\"Error message indicates comment not in PENDING state\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"Can only moderate PENDING comments\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/comments/{commentId} - Комментарий не найден",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PUBLISHED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "999999"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message indicates comment not found\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"not found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /admin/comments/{commentId} - Успешное удаление",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/{{deleteCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "{{deleteCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for deletion ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('deleteCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response body is empty\", function () {",
+                  "    pm.response.to.have.body(\"\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /admin/comments/{commentId} - Комментарий не найден",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments", "999999"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/comments - Успешный поиск без фильтров",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for search ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function () {",
+                  "                            pm.variables.set('testData', {",
+                  "                                categoryId: categoryId,",
+                  "                                userId: userId,",
+                  "                                eventId: eventId",
+                  "                            });",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/comments - Успешный поиск с фильтром по статусу",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/comments?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "comments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Test comment for search ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function () {",
+                  "                            pm.variables.set('testData', {",
+                  "                                categoryId: categoryId,",
+                  "                                userId: userId,",
+                  "                                eventId: eventId",
+                  "                            });",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "public",
+      "description": "Публичные эндпоинты для получения комментариев",
+      "item": [
+        {
+          "name": "GET /events/{eventId}/comments - Успешное получение опубликованных комментариев события",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{testEventId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{testEventId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        const createPublishedComment = function(commentText, callback) {",
+                  "                            pm.sendRequest({",
+                  "                                url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                                method: 'POST',",
+                  "                                header: { 'Content-Type': 'application/json' },",
+                  "                                body: {",
+                  "                                    mode: 'raw',",
+                  "                                    raw: JSON.stringify({",
+                  "                                        text: commentText,",
+                  "                                        eventId: eventId",
+                  "                                    })",
+                  "                                }",
+                  "                            }, function (err, commentResponse) {",
+                  "                                if (!err) {",
+                  "                                    pm.sendRequest({",
+                  "                                        url: pm.collectionVariables.get('baseUrl') + '/admin/comments/' + commentResponse.json().id,",
+                  "                                        method: 'PATCH',",
+                  "                                        header: { 'Content-Type': 'application/json' },",
+                  "                                        body: {",
+                  "                                            mode: 'raw',",
+                  "                                            raw: JSON.stringify({ status: 'PUBLISHED' })",
+                  "                                        }",
+                  "                                    }, callback);",
+                  "                                }",
+                  "                            });",
+                  "                        };",
+                  "                        createPublishedComment('Published comment 1 ' + timestamp, function() {",
+                  "                            createPublishedComment('Published comment 2 ' + timestamp, function() {",
+                  "                                pm.variables.set('testEventId', eventId);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            });",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "pm.test(\"All comments have PUBLISHED status\", function () {",
+                  "    const comments = pm.response.json();",
+                  "    comments.forEach((comment, index) => {",
+                  "        pm.expect(comment.status, `Comment at index ${index}`).to.equal(\"PUBLISHED\");",
+                  "    });",
+                  "});",
+                  "pm.test(\"All comments belong to the specified event\", function () {",
+                  "    const comments = pm.response.json();",
+                  "    const expectedEventId = parseInt(pm.variables.get('testEventId'));",
+                  "    comments.forEach((comment, index) => {",
+                  "        pm.expect(comment.eventId, `Comment at index ${index}`).to.equal(expectedEventId);",
+                  "    });",
+                  "});",
+                  "pm.test(\"Comments have correct structure\", function () {",
+                  "    const comments = pm.response.json();",
+                  "    if (comments.length > 0) {",
+                  "        const comment = comments[0];",
+                  "        pm.expect(comment).to.include.keys([",
+                  "            \"id\", \"text\", \"eventId\", \"authorId\", \"authorName\", \"status\", \"created\"",
+                  "        ]);",
+                  "    }",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /events/{eventId}/comments - Пустой список когда нет опубликованных комментариев",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/{{emptyEventId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "{{emptyEventId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event without published comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event Without Comments'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.variables.set('emptyEventId', eventId);",
+                  "                        pm.variables.set('testData', {",
+                  "                            categoryId: categoryId,",
+                  "                            userId: userId,",
+                  "                            eventId: eventId",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is an empty array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array').that.is.empty;",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /comments/{commentId} - Успешное получение опубликованного комментария",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/{{publishedCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments", "{{publishedCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Published comment for public access ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                const commentId = commentResponse.json().id;",
+                  "                                pm.sendRequest({",
+                  "                                    url: pm.collectionVariables.get('baseUrl') + '/admin/comments/' + commentId,",
+                  "                                    method: 'PATCH',",
+                  "                                    header: { 'Content-Type': 'application/json' },",
+                  "                                    body: {",
+                  "                                        mode: 'raw',",
+                  "                                        raw: JSON.stringify({ status: 'PUBLISHED' })",
+                  "                                    }",
+                  "                                }, function () {",
+                  "                                    pm.variables.set('publishedCommentId', commentId);",
+                  "                                    pm.variables.set('testData', {",
+                  "                                        categoryId: categoryId,",
+                  "                                        userId: userId,",
+                  "                                        eventId: eventId",
+                  "                                    });",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Comment has PUBLISHED status\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal(\"PUBLISHED\");",
+                  "});",
+                  "pm.test(\"Comment has correct structure\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.include.keys([",
+                  "        \"id\", \"text\", \"eventId\", \"authorId\", \"authorName\", \"status\", \"created\"",
+                  "    ]);",
+                  "});",
+                  "pm.test(\"Comment text is correct\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.text).to.include(\"Published comment for public access\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /comments/{commentId} - Комментарий не найден или не опубликован",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments", "999999"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message indicates comment not found or not published\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"not found\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /comments/{commentId} - Неопубликованный комментарий недоступен",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/comments/{{pendingCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comments", "{{pendingCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Pending comment not accessible publicly ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('pendingCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message indicates comment not found or not published\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"not found\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "private",
+      "description": "Приватные эндпоинты для управления комментариями пользователя",
+      "item": [
+        {
+          "name": "POST /users/{userId}/comments - Успешное создание комментария",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Test private comment {{$timestamp}}\",\n  \"eventId\": {{testEventId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for private comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.variables.set('testUserId', userId);",
+                  "                        pm.variables.set('testEventId', eventId);",
+                  "                        pm.variables.set('testData', {",
+                  "                            categoryId: categoryId,",
+                  "                            userId: userId,",
+                  "                            eventId: eventId",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Comment has PENDING status\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal(\"PENDING\");",
+                  "});",
+                  "pm.test(\"Comment has correct structure\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.include.keys([",
+                  "        \"id\", \"text\", \"eventId\", \"authorId\", \"authorName\", \"status\", \"created\"",
+                  "    ]);",
+                  "});",
+                  "pm.test(\"Comment text is correct\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.text).to.include(\"Test private comment\");",
+                  "});",
+                  "pm.test(\"Comment belongs to correct user\", function () {",
+                  "    const response = pm.response.json();",
+                  "    const expectedUserId = parseInt(pm.variables.get('testUserId'));",
+                  "    pm.expect(response.authorId).to.equal(expectedUserId);",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /users/{userId}/comments - Ошибка при создании комментария для несуществующего события",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Test comment for non-existent event\",\n  \"eventId\": 999999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ ",
+                  "            name: 'Test User', ",
+                  "            email: 'test-' + timestamp + '@example.com' ",
+                  "        })",
+                  "    }",
+                  "}, function (err, userResponse) {",
+                  "    if (!err) {",
+                  "        const userId = userResponse.json().id;",
+                  "        pm.variables.set('testUserId', userId);",
+                  "        pm.variables.set('testData', {",
+                  "            userId: userId",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message indicates event not found\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"not found\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /users/{userId}/comments/{commentId} - Успешное обновление комментария",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Updated private comment {{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments/{{testCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments", "{{testCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for private comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Original private comment ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('testUserId', userId);",
+                  "                                pm.variables.set('testCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Comment text is updated\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.text).to.include(\"Updated private comment\");",
+                  "});",
+                  "pm.test(\"Comment status remains PENDING\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.status).to.equal(\"PENDING\");",
+                  "});",
+                  "pm.test(\"Updated timestamp is present\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.updated).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /users/{userId}/comments/{commentId} - Ошибка при обновлении чужого комментария",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Attempt to update someone else's comment\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{wrongUserId}}/comments/{{testCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{wrongUserId}}", "comments", "{{testCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User 1', ",
+                  "                    email: 'test1-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, user1Response) {",
+                  "            if (!err) {",
+                  "                const user1Id = user1Response.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({ ",
+                  "                            name: 'Test User 2', ",
+                  "                            email: 'test2-' + timestamp + '@example.com' ",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, user2Response) {",
+                  "                    if (!err) {",
+                  "                        const user2Id = user2Response.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + user1Id + '/events',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    annotation: 'Test event for private comments',",
+                  "                                    category: categoryId,",
+                  "                                    description: 'Test event description',",
+                  "                                    eventDate: '2025-12-31 20:00:00',",
+                  "                                    location: { lat: 55.7558, lon: 37.6173 },",
+                  "                                    paid: false,",
+                  "                                    participantLimit: 100,",
+                  "                                    requestModeration: true,",
+                  "                                    title: 'Test Event'",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, eventResponse) {",
+                  "                            if (!err) {",
+                  "                                const eventId = eventResponse.json().id;",
+                  "                                pm.sendRequest({",
+                  "                                    url: pm.collectionVariables.get('baseUrl') + '/users/' + user1Id + '/comments',",
+                  "                                    method: 'POST',",
+                  "                                    header: { 'Content-Type': 'application/json' },",
+                  "                                    body: {",
+                  "                                        mode: 'raw',",
+                  "                                        raw: JSON.stringify({",
+                  "                                            text: 'Comment from user 1 ' + timestamp,",
+                  "                                            eventId: eventId",
+                  "                                        })",
+                  "                                    }",
+                  "                                }, function (err, commentResponse) {",
+                  "                                    if (!err) {",
+                  "                                        pm.variables.set('wrongUserId', user2Id);",
+                  "                                        pm.variables.set('testCommentId', commentResponse.json().id);",
+                  "                                        pm.variables.set('testData', {",
+                  "                                            categoryId: categoryId,",
+                  "                                            user1Id: user1Id,",
+                  "                                            user2Id: user2Id,",
+                  "                                            eventId: eventId",
+                  "                                        });",
+                  "                                    }",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Error message indicates access denied\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"is not the owner\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.user1Id, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.user2Id, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/{userId}/comments/{commentId} - Успешное удаление комментария",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments/{{testCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments", "{{testCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for private comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'Comment to delete ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, commentResponse) {",
+                  "                            if (!err) {",
+                  "                                pm.variables.set('testUserId', userId);",
+                  "                                pm.variables.set('testCommentId', commentResponse.json().id);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test(\"Response body is empty\", function () {",
+                  "    pm.response.to.have.body(\"\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/{userId}/comments/{commentId} - Ошибка при удалении чужого комментария",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{wrongUserId}}/comments/{{testCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{wrongUserId}}", "comments", "{{testCommentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User 1', ",
+                  "                    email: 'test1-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, user1Response) {",
+                  "            if (!err) {",
+                  "                const user1Id = user1Response.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({ ",
+                  "                            name: 'Test User 2', ",
+                  "                            email: 'test2-' + timestamp + '@example.com' ",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, user2Response) {",
+                  "                    if (!err) {",
+                  "                        const user2Id = user2Response.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + user1Id + '/events',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    annotation: 'Test event for private comments',",
+                  "                                    category: categoryId,",
+                  "                                    description: 'Test event description',",
+                  "                                    eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                                })",
+                  "                            }",
+                  "                        }, function (err, eventResponse) {",
+                  "                            if (!err) {",
+                  "                                const eventId = eventResponse.json().id;",
+                  "                                pm.sendRequest({",
+                  "                                    url: pm.collectionVariables.get('baseUrl') + '/users/' + user1Id + '/comments',",
+                  "                                    method: 'POST',",
+                  "                                    header: { 'Content-Type': 'application/json' },",
+                  "                                    body: {",
+                  "                                        mode: 'raw',",
+                  "                                        raw: JSON.stringify({",
+                  "                                            text: 'Comment from user 1 ' + timestamp,",
+                  "                                            eventId: eventId",
+                  "                                        })",
+                  "                                    }",
+                  "                                }, function (err, commentResponse) {",
+                  "                                    if (!err) {",
+                  "                                        pm.variables.set('wrongUserId', user2Id);",
+                  "                                        pm.variables.set('testCommentId', commentResponse.json().id);",
+                  "                                        pm.variables.set('testData', {",
+                  "                                            categoryId: categoryId,",
+                  "                                            user1Id: user1Id,",
+                  "                                            user2Id: user2Id,",
+                  "                                            eventId: eventId",
+                  "                                        });",
+                  "                                    }",
+                  "                                });",
+                  "                            }",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Error message indicates access denied\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"is not the owner\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.user1Id, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.user2Id, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /users/{userId}/comments/{commentId} - Комментарий не найден",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments", "999999"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ ",
+                  "            name: 'Test User', ",
+                  "            email: 'test-' + timestamp + '@example.com' ",
+                  "        })",
+                  "    }",
+                  "}, function (err, userResponse) {",
+                  "    if (!err) {",
+                  "        const userId = userResponse.json().id;",
+                  "        pm.variables.set('testUserId', userId);",
+                  "        pm.variables.set('testData', {",
+                  "            userId: userId",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Error message indicates comment not found\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include(\"not found\");",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/{userId}/comments - Успешное получение комментариев пользователя",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{testUserId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{testUserId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/categories',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ name: 'Test Category ' + timestamp })",
+                  "    }",
+                  "}, function (err, categoryResponse) {",
+                  "    if (!err) {",
+                  "        const categoryId = categoryResponse.json().id;",
+                  "        pm.sendRequest({",
+                  "            url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "            method: 'POST',",
+                  "            header: { 'Content-Type': 'application/json' },",
+                  "            body: {",
+                  "                mode: 'raw',",
+                  "                raw: JSON.stringify({ ",
+                  "                    name: 'Test User', ",
+                  "                    email: 'test-' + timestamp + '@example.com' ",
+                  "                })",
+                  "            }",
+                  "        }, function (err, userResponse) {",
+                  "            if (!err) {",
+                  "                const userId = userResponse.json().id;",
+                  "                pm.sendRequest({",
+                  "                    url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/events',",
+                  "                    method: 'POST',",
+                  "                    header: { 'Content-Type': 'application/json' },",
+                  "                    body: {",
+                  "                        mode: 'raw',",
+                  "                        raw: JSON.stringify({",
+                  "                            annotation: 'Test event for private comments',",
+                  "                            category: categoryId,",
+                  "                            description: 'Test event description',",
+                  "                            eventDate: '2025-12-31 20:00:00',",
+                  "                            location: { lat: 55.7558, lon: 37.6173 },",
+                  "                            paid: false,",
+                  "                            participantLimit: 100,",
+                  "                            requestModeration: true,",
+                  "                            title: 'Test Event'",
+                  "                        })",
+                  "                    }",
+                  "                }, function (err, eventResponse) {",
+                  "                    if (!err) {",
+                  "                        const eventId = eventResponse.json().id;",
+                  "                        pm.sendRequest({",
+                  "                            url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                            method: 'POST',",
+                  "                            header: { 'Content-Type': 'application/json' },",
+                  "                            body: {",
+                  "                                mode: 'raw',",
+                  "                                raw: JSON.stringify({",
+                  "                                    text: 'User comment 1 ' + timestamp,",
+                  "                                    eventId: eventId",
+                  "                                })",
+                  "                            }",
+                  "                        }, function () {",
+                  "                            pm.sendRequest({",
+                  "                                url: pm.collectionVariables.get('baseUrl') + '/users/' + userId + '/comments',",
+                  "                                method: 'POST',",
+                  "                                header: { 'Content-Type': 'application/json' },",
+                  "                                body: {",
+                  "                                    mode: 'raw',",
+                  "                                    raw: JSON.stringify({",
+                  "                                        text: 'User comment 2 ' + timestamp,",
+                  "                                        eventId: eventId",
+                  "                                    })",
+                  "                                }",
+                  "                            }, function () {",
+                  "                                pm.variables.set('testUserId', userId);",
+                  "                                pm.variables.set('testData', {",
+                  "                                    categoryId: categoryId,",
+                  "                                    userId: userId,",
+                  "                                    eventId: eventId",
+                  "                                });",
+                  "                            });",
+                  "                        });",
+                  "                    }",
+                  "                });",
+                  "            }",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "pm.test(\"All comments belong to the user\", function () {",
+                  "    const comments = pm.response.json();",
+                  "    const expectedUserId = parseInt(pm.variables.get('testUserId'));",
+                  "    comments.forEach((comment, index) => {",
+                  "        pm.expect(comment.authorId, `Comment at index ${index}`).to.equal(expectedUserId);",
+                  "    });",
+                  "});",
+                  "pm.test(\"Comments have correct structure\", function () {",
+                  "    const comments = pm.response.json();",
+                  "    if (comments.length > 0) {",
+                  "        const comment = comments[0];",
+                  "        pm.expect(comment).to.include.keys([",
+                  "            \"id\", \"text\", \"eventId\", \"authorId\", \"authorName\", \"status\", \"created\"",
+                  "        ]);",
+                  "    }",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/categories/' + testData.categoryId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/{userId}/comments - Пустой список когда у пользователя нет комментариев",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userWithoutCommentsId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userWithoutCommentsId}}", "comments"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const timestamp = new Date().getTime();",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/admin/users',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ ",
+                  "            name: 'User Without Comments', ",
+                  "            email: 'user-no-comments-' + timestamp + '@example.com' ",
+                  "        })",
+                  "    }",
+                  "}, function (err, userResponse) {",
+                  "    if (!err) {",
+                  "        const userId = userResponse.json().id;",
+                  "        pm.variables.set('userWithoutCommentsId', userId);",
+                  "        pm.variables.set('testData', {",
+                  "            userId: userId",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is an empty array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array').that.is.empty;",
+                  "});",
+                  "const testData = pm.variables.get('testData');",
+                  "if (testData) {",
+                  "    pm.sendRequest(pm.collectionVariables.get('baseUrl') + '/admin/users/' + testData.userId, { method: 'DELETE' });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
