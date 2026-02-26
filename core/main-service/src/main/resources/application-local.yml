@@ -1,0 +1,26 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql
+
+  datasource:
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:explorewithme;MODE=PostgreSQL;DATABASE_TO_UPPER=false;\
+      INIT=CREATE SCHEMA IF NOT EXISTS public\;SET SCHEMA public
+    username: sa
+    password: password
+
+logging.level:
+  org.springframework.orm.jpa: INFO
+  org.springframework.orm.jpa.JpaTransactionManager: DEBUG
+  org.springframework.transaction: INFO
+  org.springframework.transaction.interceptor: TRACE
