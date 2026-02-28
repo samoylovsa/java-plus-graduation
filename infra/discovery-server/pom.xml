@@ -40,7 +40,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ru.yandex.practicum.discovery.infra.DiscoveryServer</mainClass>
+                    <mainClass>ru.practicum.discovery.infra.DiscoveryServer</mainClass>
                 </configuration>
             </plugin>
         </plugins>
