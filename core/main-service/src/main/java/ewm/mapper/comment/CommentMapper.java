@@ -13,6 +13,7 @@ public interface CommentMapper {
     @Mapping(target = "eventId", source = "event.id")
     @Mapping(target = "authorId", source = "authorId")
     @Mapping(target = "authorName", ignore = true)
+    @Mapping(target = "updated", source = "updated")
     CommentDto toDto(Comment comment);
 
     @Mapping(target = "id", ignore = true)
