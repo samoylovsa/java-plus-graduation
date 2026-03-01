@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,9 +67,16 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentDto> getOwnerComments(Long userId) {
-        userClient.getUserById(userId);
+        UserDto user = userClient.getUserById(userId);
         List<Comment> comments = commentRepository.findByAuthorId(userId);
-        return fillAuthorNames(comments);
+        String authorName = user != null ? user.getName() : null;
+        return comments.stream()
+                .map(c -> {
+                    CommentDto dto = commentMapper.toDto(c);
+                    dto.setAuthorName(authorName);
+                    return dto;
+                })
+                .toList();
     }
 
     @Override
@@ -116,7 +124,9 @@ public class CommentServiceImpl implements CommentService {
     private List<CommentDto> fillAuthorNames(List<Comment> comments) {
         if (comments.isEmpty()) return List.of();
         List<Long> authorIds = comments.stream().map(Comment::getAuthorId).distinct().toList();
-        var userMap = userClient.getUsersByIds(authorIds).stream()
+        List<ewm.user.client.dto.UserDto> users = userClient.getUsersByIds(authorIds);
+        if (users == null) users = Collections.emptyList();
+        var userMap = users.stream()
                 .collect(Collectors.toMap(ewm.user.client.dto.UserDto::getId, ewm.user.client.dto.UserDto::getName));
         return comments.stream()
                 .map(c -> {

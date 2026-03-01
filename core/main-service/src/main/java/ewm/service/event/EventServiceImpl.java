@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import stats.client.StatsClient;
 
+import java.util.Collections;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -318,9 +319,11 @@ public class EventServiceImpl implements EventService {
     private List<EventFullDto> getEventsFullDtoWithStats(List<Event> events) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
         List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
-        Map<Long, UserShortDto> initiatorMap = initiatorIds.isEmpty() ? Map.of() :
-                userClient.getUsersByIds(initiatorIds).stream()
-                        .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
+        List<UserDto> initiatorDtos = initiatorIds.isEmpty() ? List.of() : userClient.getUsersByIds(initiatorIds);
+        if (initiatorDtos == null) initiatorDtos = Collections.emptyList();
+        Map<Long, UserShortDto> initiatorMap = initiatorDtos.stream()
+                .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
+        Map<Long, UserShortDto> finalInitiatorMap = initiatorMap;
         Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(eventIds);
         LocalDateTime startDate = getEarliestEventDate(events);
         Map<Long, Long> views = getViews(eventIds, startDate);
@@ -330,9 +333,16 @@ public class EventServiceImpl implements EventService {
                         event,
                         confirmedRequestsCount.getOrDefault(event.getId(), 0),
                         views.getOrDefault(event.getId(), 0L),
-                        initiatorMap.get(event.getInitiatorId())
+                        finalInitiatorMap.getOrDefault(event.getInitiatorId(), toUnknownUserShortDto(event.getInitiatorId()))
                 ))
                 .toList();
+    }
+
+    private UserShortDto toUnknownUserShortDto(Long id) {
+        UserShortDto dto = new UserShortDto();
+        dto.setId(id);
+        dto.setName("Unknown");
+        return dto;
     }
 
     private LocalDateTime getEarliestEventDate(List<Event> events) {
@@ -439,9 +449,10 @@ public class EventServiceImpl implements EventService {
     private List<EventShortDto> getEventsShortDtoWithStats(List<Event> events) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
         List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
-        Map<Long, UserShortDto> initiatorMap = initiatorIds.isEmpty() ? Map.of() :
-                userClient.getUsersByIds(initiatorIds).stream()
-                        .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
+        List<UserDto> initiatorDtos = initiatorIds.isEmpty() ? List.of() : userClient.getUsersByIds(initiatorIds);
+        if (initiatorDtos == null) initiatorDtos = Collections.emptyList();
+        Map<Long, UserShortDto> initiatorMap = initiatorDtos.stream()
+                .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
         Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(eventIds);
         LocalDateTime startDate = getEarliestEventDate(events);
         Map<Long, Long> views = getViews(eventIds, startDate);
@@ -451,7 +462,7 @@ public class EventServiceImpl implements EventService {
                         event,
                         confirmedRequestsCount.getOrDefault(event.getId(), 0),
                         views.getOrDefault(event.getId(), 0L),
-                        initiatorMap.get(event.getInitiatorId())
+                        initiatorMap.getOrDefault(event.getInitiatorId(), toUnknownUserShortDto(event.getInitiatorId()))
                 ))
                 .toList();
     }
