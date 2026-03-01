@@ -10,7 +10,6 @@ import ewm.model.category.Category;
 import ewm.model.event.Event;
 import ewm.model.event.EventState;
 import ewm.model.event.Location;
-import ewm.model.user.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -18,13 +17,13 @@ import java.time.LocalDateTime;
 @Component
 public class EventMapper {
 
-    public Event toEntity(NewEventDto newEventDto, User initiator, Category category) {
+    public Event toEntity(NewEventDto newEventDto, Long initiatorId, Category category) {
         Event event = new Event();
         event.setTitle(newEventDto.getTitle());
         event.setAnnotation(newEventDto.getAnnotation());
         event.setDescription(newEventDto.getDescription());
         event.setCategory(category);
-        event.setInitiator(initiator);
+        event.setInitiatorId(initiatorId);
         event.setPaid(newEventDto.getPaid() != null ? newEventDto.getPaid() : false);
         event.setEventDate(newEventDto.getEventDate());
         event.setCreatedOn(LocalDateTime.now());
@@ -41,22 +40,19 @@ public class EventMapper {
         return event;
     }
 
-    public EventFullDto toFullDto(Event event, int confirmedRequests, long views) {
+    public EventFullDto toFullDto(Event event, int confirmedRequests, long views, UserShortDto initiator) {
         EventFullDto eventFullDto = new EventFullDto();
         eventFullDto.setId(event.getId());
         eventFullDto.setTitle(event.getTitle());
         eventFullDto.setAnnotation(event.getAnnotation());
         eventFullDto.setDescription(event.getDescription());
 
-        CategoryDto categoryDto = new CategoryDto(); // проверить
+        CategoryDto categoryDto = new CategoryDto();
         categoryDto.setId(event.getCategory().getId());
         categoryDto.setName(event.getCategory().getName());
         eventFullDto.setCategory(categoryDto);
 
-        UserShortDto userShortDto = new UserShortDto(); // проверить
-        userShortDto.setId(event.getInitiator().getId());
-        userShortDto.setName(event.getInitiator().getName());
-        eventFullDto.setInitiator(userShortDto);
+        eventFullDto.setInitiator(initiator);
 
         eventFullDto.setPaid(event.getPaid());
         eventFullDto.setEventDate(event.getEventDate());
@@ -77,7 +73,7 @@ public class EventMapper {
         return eventFullDto;
     }
 
-    public EventShortDto toShortDto(Event event, int confirmedRequests, long views) {
+    public EventShortDto toShortDto(Event event, int confirmedRequests, long views, UserShortDto initiator) {
         EventShortDto eventShortDto = new EventShortDto();
         eventShortDto.setId(event.getId());
         eventShortDto.setTitle(event.getTitle());
@@ -90,10 +86,7 @@ public class EventMapper {
         categoryDto.setName(event.getCategory().getName());
         eventShortDto.setCategory(categoryDto);
 
-        UserShortDto userShortDto = new UserShortDto(); // проверить
-        userShortDto.setId(event.getInitiator().getId());
-        userShortDto.setName(event.getInitiator().getName());
-        eventShortDto.setInitiator(userShortDto);
+        eventShortDto.setInitiator(initiator);
 
         eventShortDto.setConfirmedRequests(confirmedRequests);
         eventShortDto.setViews(views);

@@ -10,10 +10,10 @@ import ewm.mapper.comment.CommentMapper;
 import ewm.model.comment.Comment;
 import ewm.model.comment.CommentStatus;
 import ewm.model.event.Event;
-import ewm.model.user.User;
 import ewm.repository.comment.CommentRepository;
 import ewm.repository.event.EventRepository;
-import ewm.repository.user.UserRepository;
+import ewm.user.client.UserClient;
+import ewm.user.client.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,26 +28,33 @@ import java.util.stream.Collectors;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
-    private final UserRepository userRepository;
+    private final UserClient userClient;
     private final EventRepository eventRepository;
     private final CommentMapper commentMapper;
 
     @Override
     public CommentDto createComment(Long userId, NewCommentDto newCommentDto) {
-        User author = getUser(userId);
+        UserDto user = userClient.getUserById(userId);
         Event event = getEvent(newCommentDto.getEventId());
-        Comment comment = commentMapper.toEntity(newCommentDto, event, author);
-        return commentMapper.toDto(commentRepository.save(comment));
+        Comment comment = commentMapper.toEntity(newCommentDto, event, userId);
+        comment = commentRepository.save(comment);
+        CommentDto commentDto = commentMapper.toDto(comment);
+        commentDto.setAuthorName(user.getName());
+        return commentDto;
     }
 
     @Override
     public CommentDto updateComment(Long userId, Long commentId, UpdateCommentDto updateCommentDto) {
         Comment comment = getComment(commentId);
+        UserDto user = userClient.getUserById(userId);
         validateCommentOwner(comment, userId);
         validateCommentCanBeUpdated(comment);
         comment.setText(updateCommentDto.getText());
         comment.setUpdated(LocalDateTime.now());
-        return commentMapper.toDto(commentRepository.save(comment));
+        comment = commentRepository.save(comment);
+        CommentDto commentDto = commentMapper.toDto(comment);
+        commentDto.setAuthorName(user.getName());
+        return commentDto;
     }
 
     @Override
@@ -59,10 +66,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentDto> getOwnerComments(Long userId) {
-        getUser(userId);
-        return commentRepository.findByAuthorId(userId).stream()
-                .map(commentMapper::toDto)
-                .collect(Collectors.toList());
+        userClient.getUserById(userId);
+        List<Comment> comments = commentRepository.findByAuthorId(userId);
+        return fillAuthorNames(comments);
     }
 
     @Override
@@ -72,7 +78,10 @@ public class CommentServiceImpl implements CommentService {
         validateModerationStatus(updateDto.getStatus());
         comment.setStatus(updateDto.getStatus());
         comment.setUpdated(LocalDateTime.now());
-        return commentMapper.toDto(commentRepository.save(comment));
+        comment = commentRepository.save(comment);
+        CommentDto dto = commentMapper.toDto(comment);
+        dto.setAuthorName(userClient.getUserById(comment.getAuthorId()).getName());
+        return dto;
     }
 
     @Override
@@ -84,18 +93,14 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getCommentsForAdmin(CommentStatus status, Long eventId, Long userId) {
-        return commentRepository.findCommentsByFilters(status, eventId, userId).stream()
-                .map(commentMapper::toDto)
-                .collect(Collectors.toList());
+        return fillAuthorNames(commentRepository.findCommentsByFilters(status, eventId, userId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getPublishedEventComments(Long eventId) {
         getEvent(eventId);
-        return commentRepository.findByEventIdAndStatus(eventId, CommentStatus.PUBLISHED).stream()
-                .map(commentMapper::toDto)
-                .collect(Collectors.toList());
+        return fillAuthorNames(commentRepository.findByEventIdAndStatus(eventId, CommentStatus.PUBLISHED));
     }
 
     @Override
@@ -103,12 +108,23 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto getPublishedComment(Long commentId) {
         Comment comment = commentRepository.findByIdAndStatus(commentId, CommentStatus.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Comment with id=" + commentId + " not found or not published"));
-        return commentMapper.toDto(comment);
+        CommentDto dto = commentMapper.toDto(comment);
+        dto.setAuthorName(userClient.getUserById(comment.getAuthorId()).getName());
+        return dto;
     }
 
-    private User getUser(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " not found"));
+    private List<CommentDto> fillAuthorNames(List<Comment> comments) {
+        if (comments.isEmpty()) return List.of();
+        List<Long> authorIds = comments.stream().map(Comment::getAuthorId).distinct().toList();
+        var userMap = userClient.getUsersByIds(authorIds).stream()
+                .collect(Collectors.toMap(ewm.user.client.dto.UserDto::getId, ewm.user.client.dto.UserDto::getName));
+        return comments.stream()
+                .map(c -> {
+                    CommentDto dto = commentMapper.toDto(c);
+                    dto.setAuthorName(userMap.get(c.getAuthorId()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     private Event getEvent(Long eventId) {
@@ -122,7 +138,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private void validateCommentOwner(Comment comment, Long userId) {
-        if (!comment.getAuthor().getId().equals(userId)) {
+        if (!comment.getAuthorId().equals(userId)) {
             throw new AccessDeniedException("User with id=" + userId + " is not the owner of comment with id=" + comment.getId());
         }
     }

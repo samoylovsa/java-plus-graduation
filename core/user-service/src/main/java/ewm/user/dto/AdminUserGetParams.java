@@ -1,4 +1,4 @@
-package ewm.dto.user;
+package ewm.user.dto;
 
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
@@ -9,7 +9,8 @@ import java.util.List;
 @Getter
 @Setter
 public class AdminUserGetParams {
-    private List<Integer> ids;
+
+    private List<Long> ids;
 
     @Min(0)
     private int from = 0;

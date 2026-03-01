@@ -1,4 +1,4 @@
-package ewm.dto.user;
+package ewm.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,6 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class UserDto {
+
     private Long id;
 
     @NotBlank(message = "Имя пользователя не может быть пустым")

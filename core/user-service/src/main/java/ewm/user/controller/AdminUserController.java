@@ -1,8 +1,8 @@
-package ewm.controller.user;
+package ewm.user.controller;
 
-import ewm.dto.user.AdminUserGetParams;
-import ewm.dto.user.UserDto;
-import ewm.service.user.UserService;
+import ewm.user.dto.AdminUserGetParams;
+import ewm.user.dto.UserDto;
+import ewm.user.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +17,7 @@ import java.util.List;
 @RequestMapping("/admin/users")
 @Validated
 public class AdminUserController {
+
     private final UserService userService;
 
     @PostMapping

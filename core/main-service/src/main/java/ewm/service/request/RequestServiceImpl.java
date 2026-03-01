@@ -11,10 +11,9 @@ import ewm.mapper.request.RequestMapper;
 import ewm.model.event.EventState;
 import ewm.model.request.Request;
 import ewm.model.request.RequestStatus;
-import ewm.model.user.User;
 import ewm.repository.request.RequestRepository;
-import ewm.repository.user.UserRepository;
 import ewm.service.event.EventService;
+import ewm.user.client.UserClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,12 +29,12 @@ public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
-    private final UserRepository userRepository;
+    private final UserClient userClient;
     private final EventService eventService;
 
     @Override
     public List<UserRequestDto> getRequestsByUser(Long userId) {
-        getUserEntity(userId);
+        userClient.getUserById(userId);
         return requestRepository.findAllByRequesterId(userId).stream()
                 .map(requestMapper::toDto)
                 .toList();
@@ -44,7 +43,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     @Transactional
     public UserRequestDto addRequest(Long userId, Long eventId) {
-        getUserEntity(userId);
+        userClient.getUserById(userId);
         EventFullDto event = eventService.getEventById(eventId);
 
         validateRequestCreation(userId, eventId, event);
@@ -56,7 +55,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public UserRequestDto cancelRequest(Long userId, Long requestId) {
-        getUserEntity(userId);
+        userClient.getUserById(userId);
         Request request = getRequestEntity(requestId);
 
         validateUserOwnsRequest(request, userId);
@@ -246,8 +245,4 @@ public class RequestServiceImpl implements RequestService {
         return confirmed < limit;
     }
 
-    private User getUserEntity(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
-    }
 }

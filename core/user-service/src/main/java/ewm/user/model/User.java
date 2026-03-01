@@ -1,4 +1,4 @@
-package ewm.model.user;
+package ewm.user.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,6 +11,7 @@ import lombok.ToString;
 @Setter
 @ToString
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
