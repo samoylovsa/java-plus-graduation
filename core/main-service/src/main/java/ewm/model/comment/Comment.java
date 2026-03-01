@@ -1,7 +1,6 @@
 package ewm.model.comment;
 
 import ewm.model.event.Event;
-import ewm.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,9 +25,8 @@ public class Comment {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

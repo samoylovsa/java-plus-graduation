@@ -1,7 +1,6 @@
 package ewm.model.event;
 
 import ewm.model.category.Category;
-import ewm.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,9 +28,8 @@ public class Event {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @ManyToOne
-    @JoinColumn(name = "initiator_id", nullable = false)
-    private User initiator;
+    @Column(name = "initiator_id", nullable = false)
+    private Long initiatorId;
 
     private Boolean paid;
 

@@ -10,14 +10,13 @@ import ewm.exception.NotFoundException;
 import ewm.exception.ValidationException;
 import ewm.mapper.event.EventMapper;
 import ewm.model.category.Category;
+import ewm.dto.user.UserShortDto;
 import ewm.model.event.Event;
 import ewm.model.event.EventState;
-import ewm.model.user.User;
 import ewm.repository.category.CategoryRepository;
 import ewm.repository.event.EventRepository;
 import ewm.repository.event.SearchEventSpecifications;
 import ewm.repository.request.RequestRepository;
-import ewm.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +32,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import ewm.user.client.UserClient;
+import ewm.user.client.dto.UserDto;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
-    private final UserRepository userRepository;
+    private final UserClient userClient;
     private final CategoryRepository categoryRepository;
     private final EventMapper eventMapper;
     private final RequestRepository requestRepository;
@@ -49,14 +50,14 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
-        User initiator = getUserEntity(userId);
+        UserDto user = userClient.getUserById(userId);
         Category category = getCategoryEntity(newEventDto.getCategory());
-
         validateEventDate(newEventDto.getEventDate());
 
-        Event event = eventMapper.toEntity(newEventDto, initiator, category);
+        Event event = eventMapper.toEntity(newEventDto, userId, category);
         event = eventRepository.save(event);
-        return eventMapper.toFullDto(event, 0, 0);
+        UserShortDto initiator = toUserShortDto(user);
+        return eventMapper.toFullDto(event, 0, 0, initiator);
     }
 
     @Override
@@ -208,10 +209,11 @@ public class EventServiceImpl implements EventService {
                         String.format("Category with id=%d was not found", catId)));
     }
 
-    private User getUserEntity(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id=%d was not found", userId)));
+    private UserShortDto toUserShortDto(UserDto dto) {
+        UserShortDto shortDto = new UserShortDto();
+        shortDto.setId(dto.getId());
+        shortDto.setName(dto.getName());
+        return shortDto;
     }
 
     private void validateEventDate(LocalDateTime eventDate) {
@@ -228,7 +230,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validateUserIsInitiator(Event event, Long userId) {
-        if (!event.getInitiator().getId().equals(userId)) {
+        if (!event.getInitiatorId().equals(userId)) {
             throw new BusinessRuleException(
                     String.format("User with id=%d is not the initiator of this event", userId));
         }
@@ -287,10 +289,11 @@ public class EventServiceImpl implements EventService {
         List<Long> searchEventIds = List.of(event.getId());
         Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(searchEventIds);
         Map<Long, Long> views = getViews(searchEventIds, event.getCreatedOn());
-
+        UserShortDto initiator = toUserShortDto(userClient.getUserById(event.getInitiatorId()));
         return eventMapper.toFullDto(event,
                 confirmedRequestsCount.getOrDefault(event.getId(), 0),
-                views.getOrDefault(event.getId(), 0L));
+                views.getOrDefault(event.getId(), 0L),
+                initiator);
     }
 
     private Specification<Event> buildAdminSpecification(GetEventAdminRequest request) {
@@ -314,6 +317,10 @@ public class EventServiceImpl implements EventService {
 
     private List<EventFullDto> getEventsFullDtoWithStats(List<Event> events) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
+        List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
+        Map<Long, UserShortDto> initiatorMap = initiatorIds.isEmpty() ? Map.of() :
+                userClient.getUsersByIds(initiatorIds).stream()
+                        .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
         Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(eventIds);
         LocalDateTime startDate = getEarliestEventDate(events);
         Map<Long, Long> views = getViews(eventIds, startDate);
@@ -322,7 +329,8 @@ public class EventServiceImpl implements EventService {
                 .map(event -> eventMapper.toFullDto(
                         event,
                         confirmedRequestsCount.getOrDefault(event.getId(), 0),
-                        views.getOrDefault(event.getId(), 0L)
+                        views.getOrDefault(event.getId(), 0L),
+                        initiatorMap.get(event.getInitiatorId())
                 ))
                 .toList();
     }
@@ -430,6 +438,10 @@ public class EventServiceImpl implements EventService {
 
     private List<EventShortDto> getEventsShortDtoWithStats(List<Event> events) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
+        List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
+        Map<Long, UserShortDto> initiatorMap = initiatorIds.isEmpty() ? Map.of() :
+                userClient.getUsersByIds(initiatorIds).stream()
+                        .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
         Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(eventIds);
         LocalDateTime startDate = getEarliestEventDate(events);
         Map<Long, Long> views = getViews(eventIds, startDate);
@@ -438,7 +450,8 @@ public class EventServiceImpl implements EventService {
                 .map(event -> eventMapper.toShortDto(
                         event,
                         confirmedRequestsCount.getOrDefault(event.getId(), 0),
-                        views.getOrDefault(event.getId(), 0L)
+                        views.getOrDefault(event.getId(), 0L),
+                        initiatorMap.get(event.getInitiatorId())
                 ))
                 .toList();
     }

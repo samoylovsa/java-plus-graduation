@@ -22,7 +22,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT c FROM Comment c " +
             "WHERE (:status IS NULL OR c.status = :status) " +
             "AND (:eventId IS NULL OR c.event.id = :eventId) " +
-            "AND (:userId IS NULL OR c.author.id = :userId)")
+            "AND (:userId IS NULL OR c.authorId = :userId)")
     List<Comment> findCommentsByFilters(@Param("status") CommentStatus status,
                                         @Param("eventId") Long eventId,
                                         @Param("userId") Long userId);

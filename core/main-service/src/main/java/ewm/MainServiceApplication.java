@@ -10,7 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 @Slf4j
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = "stats.client")
+@EnableFeignClients(basePackages = {"stats.client", "ewm.user.client"})
 @ComponentScan({
         "ewm",
         "stats.client"
