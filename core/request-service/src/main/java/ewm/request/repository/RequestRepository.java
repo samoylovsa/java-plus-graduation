@@ -1,8 +1,8 @@
-package ewm.repository.request;
+package ewm.request.repository;
 
-import ewm.dto.request.CountConfirmedRequestsByEventId;
-import ewm.model.request.Request;
-import ewm.model.request.RequestStatus;
+import ewm.request.client.dto.CountConfirmedRequestsByEventId;
+import ewm.request.model.Request;
+import ewm.request.model.RequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,11 +22,11 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     List<Request> findAllByEventIdAndStatus(Long eventId, RequestStatus requestStatus);
 
     @Query("""
-            SELECT NEW ewm.dto.request.CountConfirmedRequestsByEventId(r.eventId, COUNT(r))
+            SELECT NEW ewm.request.client.dto.CountConfirmedRequestsByEventId(r.eventId, COUNT(r))
             FROM Request r
             WHERE r.eventId IN :eventIds AND r.status = ewm.model.request.RequestStatus.CONFIRMED
             GROUP BY r.eventId"""
     )
     List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(@Param("eventIds") List<Long> eventIds);
-
 }
+

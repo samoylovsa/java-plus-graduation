@@ -1,4 +1,4 @@
-package ewm.dto.request;
+package ewm.request.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UpdateStatusRequestDtoResp {
 
-    List<UserRequestDto> confirmedRequests;
-    List<UserRequestDto> rejectedRequests;
+    private List<UserRequestDto> confirmedRequests;
+    private List<UserRequestDto> rejectedRequests;
 }
+

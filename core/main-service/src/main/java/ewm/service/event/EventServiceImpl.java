@@ -3,7 +3,8 @@ package ewm.service.event;
 import dto.GetStatsDto;
 import dto.SaveHitDto;
 import ewm.dto.event.*;
-import ewm.dto.request.CountConfirmedRequestsByEventId;
+import ewm.request.client.RequestClient;
+import ewm.request.client.dto.CountConfirmedRequestsByEventId;
 import ewm.exception.BusinessRuleException;
 import ewm.exception.ConflictException;
 import ewm.exception.NotFoundException;
@@ -16,7 +17,6 @@ import ewm.model.event.EventState;
 import ewm.repository.category.CategoryRepository;
 import ewm.repository.event.EventRepository;
 import ewm.repository.event.SearchEventSpecifications;
-import ewm.repository.request.RequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,7 +45,7 @@ public class EventServiceImpl implements EventService {
     private final UserClient userClient;
     private final CategoryRepository categoryRepository;
     private final EventMapper eventMapper;
-    private final RequestRepository requestRepository;
+    private final RequestClient requestClient;
     private final StatsClient statsClient;
 
     @Override
@@ -140,6 +140,22 @@ public class EventServiceImpl implements EventService {
 
         if (events.isEmpty()) return List.of();
 
+        if (request.getOnlyAvailable()) {
+            List<Long> eventIds = events.stream().map(Event::getId).toList();
+            Map<Long, Integer> confirmed = getConfirmedRequests(eventIds);
+            events = events.stream()
+                    .filter(event -> {
+                        Integer limit = event.getParticipantLimit();
+                        if (limit == null || limit == 0) return true;
+                        int confirmedCount = confirmed.getOrDefault(event.getId(), 0);
+                        return confirmedCount < limit;
+                    })
+                    .toList();
+            if (events.isEmpty()) {
+                return List.of();
+            }
+        }
+
         saveHit("/events", ip);
 
         List<EventShortDto> result = getEventsShortDtoWithStats(events);
@@ -161,7 +177,7 @@ public class EventServiceImpl implements EventService {
     private Map<Long, Integer> getConfirmedRequests(List<Long> eventIds) {
         if (eventIds.isEmpty()) return Map.of();
 
-        List<CountConfirmedRequestsByEventId> events = requestRepository.countConfirmedRequestsByEventIds(eventIds);
+        List<CountConfirmedRequestsByEventId> events = requestClient.countConfirmedRequestsByEventIds(eventIds);
         Map<Long, Integer> confirmedRequests = eventIds.stream()
                 .collect(Collectors.toMap(id -> id, id -> 0));
 
@@ -420,10 +436,6 @@ public class EventServiceImpl implements EventService {
 
         if (request.getRangeEnd() != null) {
             specification = specification.and(SearchEventSpecifications.addWhereEndsAfter(request.getRangeEnd()));
-        }
-
-        if (request.getOnlyAvailable()) {
-            specification = specification.and(SearchEventSpecifications.addWhereAvailableSlots());
         }
 
         return specification;
