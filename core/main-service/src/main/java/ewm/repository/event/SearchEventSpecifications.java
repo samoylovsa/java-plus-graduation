@@ -2,10 +2,6 @@ package ewm.repository.event;
 
 import ewm.model.event.Event;
 import ewm.model.event.EventState;
-import ewm.model.request.Request;
-import ewm.model.request.RequestStatus;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
@@ -67,27 +63,6 @@ public class SearchEventSpecifications {
         return (root, query, criteriaBuilder) -> {
             if (paid == null) return criteriaBuilder.conjunction();
             return criteriaBuilder.equal(root.get("paid"), paid);
-        };
-    }
-
-    public static Specification<Event> addWhereAvailableSlots() {
-        return (root, query, criteriaBuilder) -> {
-            assert query != null;
-            Subquery<Long> subquery = query.subquery(Long.class);
-            Root<Request> requestRoot = subquery.from(Request.class);
-
-            subquery.select(criteriaBuilder.count(requestRoot));
-            subquery.where(
-                    criteriaBuilder.and(
-                            criteriaBuilder.equal(requestRoot.get("event"), root),
-                            criteriaBuilder.equal(requestRoot.get("status"), RequestStatus.CONFIRMED)
-                    )
-            );
-
-            return criteriaBuilder.or(
-                    criteriaBuilder.equal(root.get("participantLimit"), 0),
-                    criteriaBuilder.lessThan(subquery, root.get("participantLimit"))
-            );
         };
     }
 }

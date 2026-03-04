@@ -1,18 +1,19 @@
-package ewm.service.request;
+package ewm.request.service;
 
-import ewm.dto.event.EventFullDto;
-import ewm.dto.request.UpdateStatusRequestDtoReq;
-import ewm.dto.request.UpdateStatusRequestDtoResp;
-import ewm.dto.request.UserRequestDto;
-import ewm.exception.ConflictException;
-import ewm.exception.NotFoundException;
-import ewm.exception.ValidationException;
-import ewm.mapper.request.RequestMapper;
-import ewm.model.event.EventState;
-import ewm.model.request.Request;
-import ewm.model.request.RequestStatus;
-import ewm.repository.request.RequestRepository;
-import ewm.service.event.EventService;
+import ewm.request.client.dto.CountConfirmedRequestsByEventId;
+import ewm.request.dto.UpdateStatusRequestDtoReq;
+import ewm.request.dto.UpdateStatusRequestDtoResp;
+import ewm.request.dto.UserRequestDto;
+import ewm.request.eventclient.EventClient;
+import ewm.request.eventclient.EventState;
+import ewm.request.eventclient.InternalEventDto;
+import ewm.request.mapper.RequestMapper;
+import ewm.request.exception.ConflictException;
+import ewm.request.exception.NotFoundException;
+import ewm.request.exception.ValidationException;
+import ewm.request.model.Request;
+import ewm.request.model.RequestStatus;
+import ewm.request.repository.RequestRepository;
 import ewm.user.client.UserClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
     private final UserClient userClient;
-    private final EventService eventService;
+    private final EventClient eventClient;
 
     @Override
     public List<UserRequestDto> getRequestsByUser(Long userId) {
@@ -44,7 +45,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     public UserRequestDto addRequest(Long userId, Long eventId) {
         userClient.getUserById(userId);
-        EventFullDto event = eventService.getEventById(eventId);
+        InternalEventDto event = eventClient.getEventById(eventId);
 
         validateRequestCreation(userId, eventId, event);
 
@@ -72,7 +73,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     public List<UserRequestDto> getRequestsByEventId(Long userId, Long eventId) {
-        EventFullDto event = eventService.getEventById(eventId);
+        InternalEventDto event = eventClient.getEventById(eventId);
         validateUserIsInitiator(event, userId);
 
         return requestRepository.findAllByEventId(eventId).stream()
@@ -83,7 +84,7 @@ public class RequestServiceImpl implements RequestService {
     @Transactional
     @Override
     public UpdateStatusRequestDtoResp updateRequestStatus(Long userId, Long eventId, UpdateStatusRequestDtoReq request) {
-        EventFullDto event = eventService.getEventById(eventId);
+        InternalEventDto event = eventClient.getEventById(eventId);
         validateUserIsInitiator(event, userId);
         validateStatusUpdateRequired(event);
 
@@ -96,12 +97,17 @@ public class RequestServiceImpl implements RequestService {
         return processStatusUpdate(requestsForUpdate, event, newStatus);
     }
 
-    private void validateRequestCreation(Long userId, Long eventId, EventFullDto event) {
+    @Override
+    public List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(List<Long> eventIds) {
+        return requestRepository.countConfirmedRequestsByEventIds(eventIds);
+    }
+
+    private void validateRequestCreation(Long userId, Long eventId, InternalEventDto event) {
         if (!requestRepository.findAllByEventIdAndRequesterId(eventId, userId).isEmpty()) {
             throw new ConflictException("Такой запрос уже существует");
         }
 
-        if (event.getInitiator().getId().equals(userId)) {
+        if (event.getInitiatorId().equals(userId)) {
             throw new ConflictException("Инициатор не может отправить запрос на участие в своём событии");
         }
 
@@ -114,7 +120,7 @@ public class RequestServiceImpl implements RequestService {
         }
     }
 
-    private Request createRequest(Long userId, Long eventId, EventFullDto event) {
+    private Request createRequest(Long userId, Long eventId, InternalEventDto event) {
         Request request = new Request();
         request.setRequesterId(userId);
         request.setEventId(eventId);
@@ -140,14 +146,14 @@ public class RequestServiceImpl implements RequestService {
         }
     }
 
-    private void validateUserIsInitiator(EventFullDto event, Long userId) {
-        if (!event.getInitiator().getId().equals(userId)) {
+    private void validateUserIsInitiator(InternalEventDto event, Long userId) {
+        if (!event.getInitiatorId().equals(userId)) {
             throw new ValidationException("Пользователь с id = " + userId + " не является инициатором события");
         }
     }
 
-    private void validateStatusUpdateRequired(EventFullDto event) {
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+    private void validateStatusUpdateRequired(InternalEventDto event) {
+        if (Boolean.FALSE.equals(event.getRequestModeration()) || event.getParticipantLimit() == 0) {
             throw new ValidationException("Для данного события подтверждение заявок не требуется");
         }
     }
@@ -178,7 +184,7 @@ public class RequestServiceImpl implements RequestService {
         }
     }
 
-    private UpdateStatusRequestDtoResp processStatusUpdate(List<Request> requests, EventFullDto event, RequestStatus newStatus) {
+    private UpdateStatusRequestDtoResp processStatusUpdate(List<Request> requests, InternalEventDto event, RequestStatus newStatus) {
         List<UserRequestDto> confirmedRequests = new ArrayList<>();
         List<UserRequestDto> rejectedRequests = new ArrayList<>();
 
@@ -192,7 +198,7 @@ public class RequestServiceImpl implements RequestService {
         return requestMapper.toUpdateStatusRequestDtoResp(confirmedRequests, rejectedRequests);
     }
 
-    private void processConfirmedRequests(List<Request> requests, EventFullDto event,
+    private void processConfirmedRequests(List<Request> requests, InternalEventDto event,
                                           List<UserRequestDto> confirmedRequests, List<UserRequestDto> rejectedRequests) {
         int currentConfirmedCount = requestRepository.countByEventIdAndStatus(event.getId(), RequestStatus.CONFIRMED);
         int availableSlots = event.getParticipantLimit() - currentConfirmedCount;
@@ -238,11 +244,11 @@ public class RequestServiceImpl implements RequestService {
         }
     }
 
-    private boolean eventHasFreeSlot(EventFullDto event) {
+    private boolean eventHasFreeSlot(InternalEventDto event) {
         Integer limit = event.getParticipantLimit();
         if (limit == null || limit == 0) return true;
         int confirmed = requestRepository.countByEventIdAndStatus(event.getId(), RequestStatus.CONFIRMED);
         return confirmed < limit;
     }
-
 }
+

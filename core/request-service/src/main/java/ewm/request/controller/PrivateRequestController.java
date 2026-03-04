@@ -1,7 +1,7 @@
-package ewm.controller.request;
+package ewm.request.controller;
 
-import ewm.dto.request.UserRequestDto;
-import ewm.service.request.RequestService;
+import ewm.request.dto.UserRequestDto;
+import ewm.request.service.RequestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,15 +28,16 @@ public class PrivateRequestController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserRequestDto addRequest(@PathVariable("userId") Long userId,
-                                              @RequestParam Long eventId) {
+                                     @RequestParam Long eventId) {
         log.debug("Controller: addRequest userId={}, eventId={}", userId, eventId);
         return requestService.addRequest(userId, eventId);
     }
 
     @PatchMapping("/{requestId}/cancel")
     public UserRequestDto cancelRequest(@PathVariable("userId") Long userId,
-                                                 @PathVariable("requestId") Long requestId) {
+                                        @PathVariable("requestId") Long requestId) {
         log.debug("Controller: cancelRequest userId={}, requestId={}", userId, requestId);
         return requestService.cancelRequest(userId, requestId);
     }
 }
+

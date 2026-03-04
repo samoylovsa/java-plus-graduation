@@ -1,6 +1,6 @@
-package ewm.dto.request;
+package ewm.request.dto;
 
-import ewm.model.request.RequestStatus;
+import ewm.request.model.RequestStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +11,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateStatusRequestDtoReq {
-    List<Long> requestIds;
-    RequestStatus status;
+
+    private List<Long> requestIds;
+    private RequestStatus status;
 }
+

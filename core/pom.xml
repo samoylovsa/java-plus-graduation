@@ -22,6 +22,8 @@
         <module>main-service</module>
         <module>user-service</module>
         <module>user-client</module>
+        <module>request-service</module>
+        <module>request-client</module>
     </modules>
 
 </project>
