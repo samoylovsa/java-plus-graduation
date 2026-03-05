@@ -15,7 +15,6 @@ public interface CompilationRepository extends JpaRepository<Compilation, Long> 
             SELECT c FROM Compilation c
             LEFT JOIN FETCH c.events e
             LEFT JOIN FETCH e.category
-            LEFT JOIN FETCH e.initiator
             WHERE c.id = :id""")
     Optional<Compilation> findByIdWithEvents(@Param("id") Long id);
 
@@ -31,7 +30,6 @@ public interface CompilationRepository extends JpaRepository<Compilation, Long> 
             SELECT DISTINCT c FROM Compilation c
             LEFT JOIN FETCH c.events e
             LEFT JOIN FETCH e.category
-            LEFT JOIN FETCH e.initiator
             WHERE c.id IN :ids""")
     List<Compilation> findAllByIdInWithEvents(@Param("ids") List<Long> ids);
 }

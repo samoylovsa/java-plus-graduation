@@ -24,7 +24,7 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
     @Query("""
             SELECT NEW ewm.request.client.dto.CountConfirmedRequestsByEventId(r.eventId, COUNT(r))
             FROM Request r
-            WHERE r.eventId IN :eventIds AND r.status = ewm.model.request.RequestStatus.CONFIRMED
+            WHERE r.eventId IN :eventIds AND r.status = ewm.request.model.RequestStatus.CONFIRMED
             GROUP BY r.eventId"""
     )
     List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(@Param("eventIds") List<Long> eventIds);
