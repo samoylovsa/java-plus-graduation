@@ -1,9 +1,9 @@
-package ewm.controller.comment;
+package ewm.comment.controller;
 
-import ewm.dto.comment.CommentDto;
-import ewm.dto.comment.NewCommentDto;
-import ewm.dto.comment.UpdateCommentDto;
-import ewm.service.comment.CommentService;
+import ewm.comment.dto.CommentDto;
+import ewm.comment.dto.NewCommentDto;
+import ewm.comment.dto.UpdateCommentDto;
+import ewm.comment.service.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,3 +57,4 @@ public class CommentPrivateController {
         return result;
     }
 }
+

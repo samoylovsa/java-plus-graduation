@@ -1,25 +1,24 @@
-package ewm.service.comment;
+package ewm.comment.service;
 
-import ewm.dto.comment.CommentDto;
-import ewm.dto.comment.CommentStatusUpdateDto;
-import ewm.dto.comment.NewCommentDto;
-import ewm.dto.comment.UpdateCommentDto;
-import ewm.exception.AccessDeniedException;
-import ewm.exception.NotFoundException;
-import ewm.mapper.comment.CommentMapper;
-import ewm.model.comment.Comment;
-import ewm.model.comment.CommentStatus;
-import ewm.model.event.Event;
-import ewm.repository.comment.CommentRepository;
-import ewm.repository.event.EventRepository;
+import ewm.comment.dto.CommentDto;
+import ewm.comment.dto.CommentStatusUpdateDto;
+import ewm.comment.dto.NewCommentDto;
+import ewm.comment.dto.UpdateCommentDto;
+import ewm.comment.eventclient.EventClient;
+import ewm.comment.exception.AccessDeniedException;
+import ewm.comment.exception.NotFoundException;
+import ewm.comment.mapper.CommentMapper;
+import ewm.comment.model.Comment;
+import ewm.comment.model.CommentStatus;
+import ewm.comment.repository.CommentRepository;
 import ewm.user.client.UserClient;
 import ewm.user.client.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,14 +29,14 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final UserClient userClient;
-    private final EventRepository eventRepository;
+    private final EventClient eventClient;
     private final CommentMapper commentMapper;
 
     @Override
     public CommentDto createComment(Long userId, NewCommentDto newCommentDto) {
         UserDto user = userClient.getUserById(userId);
-        Event event = getEvent(newCommentDto.getEventId());
-        Comment comment = commentMapper.toEntity(newCommentDto, event, userId);
+        eventClient.getEventById(newCommentDto.getEventId());
+        Comment comment = commentMapper.toEntity(newCommentDto, userId);
         comment = commentRepository.save(comment);
         CommentDto commentDto = commentMapper.toDto(comment);
         commentDto.setAuthorName(user.getName());
@@ -87,6 +86,7 @@ public class CommentServiceImpl implements CommentService {
         comment.setStatus(updateDto.getStatus());
         comment.setUpdated(LocalDateTime.now());
         comment = commentRepository.save(comment);
+
         CommentDto dto = commentMapper.toDto(comment);
         dto.setAuthorName(userClient.getUserById(comment.getAuthorId()).getName());
         return dto;
@@ -107,7 +107,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public List<CommentDto> getPublishedEventComments(Long eventId) {
-        getEvent(eventId);
+        eventClient.getEventById(eventId);
         return fillAuthorNames(commentRepository.findByEventIdAndStatus(eventId, CommentStatus.PUBLISHED));
     }
 
@@ -124,10 +124,10 @@ public class CommentServiceImpl implements CommentService {
     private List<CommentDto> fillAuthorNames(List<Comment> comments) {
         if (comments.isEmpty()) return List.of();
         List<Long> authorIds = comments.stream().map(Comment::getAuthorId).distinct().toList();
-        List<ewm.user.client.dto.UserDto> users = userClient.getUsersByIds(authorIds);
+        List<UserDto> users = userClient.getUsersByIds(authorIds);
         if (users == null) users = Collections.emptyList();
         var userMap = users.stream()
-                .collect(Collectors.toMap(ewm.user.client.dto.UserDto::getId, ewm.user.client.dto.UserDto::getName));
+                .collect(Collectors.toMap(UserDto::getId, UserDto::getName));
         return comments.stream()
                 .map(c -> {
                     CommentDto dto = commentMapper.toDto(c);
@@ -135,11 +135,6 @@ public class CommentServiceImpl implements CommentService {
                     return dto;
                 })
                 .collect(Collectors.toList());
-    }
-
-    private Event getEvent(Long eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " not found"));
     }
 
     private Comment getComment(Long commentId) {
@@ -179,3 +174,4 @@ public class CommentServiceImpl implements CommentService {
         }
     }
 }
+

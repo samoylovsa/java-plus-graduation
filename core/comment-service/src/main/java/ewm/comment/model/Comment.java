@@ -1,6 +1,5 @@
-package ewm.model.comment;
+package ewm.comment.model;
 
-import ewm.model.event.Event;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,9 +21,8 @@ public class Comment {
     @Column(nullable = false, length = 2000)
     private String text;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
+    @Column(name = "event_id", nullable = false)
+    private Long eventId;
 
     @Column(name = "author_id", nullable = false)
     private Long authorId;
@@ -38,3 +37,4 @@ public class Comment {
     @Column(name = "updated_date")
     private LocalDateTime updated;
 }
+

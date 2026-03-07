@@ -1,7 +1,7 @@
-package ewm.controller.comment;
+package ewm.comment.controller;
 
-import ewm.dto.comment.CommentDto;
-import ewm.service.comment.CommentService;
+import ewm.comment.dto.CommentDto;
+import ewm.comment.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,3 +35,4 @@ public class CommentPublicController {
         return result;
     }
 }
+
