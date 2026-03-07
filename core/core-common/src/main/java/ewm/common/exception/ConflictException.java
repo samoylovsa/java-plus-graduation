@@ -1,4 +1,4 @@
-package ewm.exception;
+package ewm.common.exception;
 
 public class ConflictException extends RuntimeException {
     public ConflictException(String message) {

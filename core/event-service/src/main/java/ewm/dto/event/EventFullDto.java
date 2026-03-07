@@ -2,7 +2,7 @@ package ewm.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import ewm.dto.category.CategoryDto;
-import ewm.dto.user.UserShortDto;
+import ewm.user.client.dto.UserShortDto;
 import ewm.model.event.EventState;
 import lombok.Data;
 import lombok.NoArgsConstructor;

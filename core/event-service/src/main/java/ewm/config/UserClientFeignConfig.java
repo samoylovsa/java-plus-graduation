@@ -1,6 +1,6 @@
 package ewm.config;
 
-import ewm.exception.NotFoundException;
+import ewm.common.exception.NotFoundException;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;

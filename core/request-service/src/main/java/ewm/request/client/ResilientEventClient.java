@@ -2,7 +2,7 @@ package ewm.request.client;
 
 import ewm.event.client.EventClient;
 import ewm.event.client.dto.InternalEventDto;
-import ewm.request.exception.ServiceUnavailableException;
+import ewm.common.exception.ServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;

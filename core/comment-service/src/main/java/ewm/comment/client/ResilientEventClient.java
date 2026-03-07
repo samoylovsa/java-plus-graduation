@@ -1,6 +1,6 @@
 package ewm.comment.client;
 
-import ewm.comment.exception.ServiceUnavailableException;
+import ewm.common.exception.ServiceUnavailableException;
 import ewm.event.client.EventClient;
 import ewm.event.client.dto.InternalEventDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

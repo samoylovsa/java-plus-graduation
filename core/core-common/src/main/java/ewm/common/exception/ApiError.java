@@ -1,4 +1,4 @@
-package ewm.request.exception;
+package ewm.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
@@ -16,4 +16,3 @@ public class ApiError {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime timestamp;
 }
-

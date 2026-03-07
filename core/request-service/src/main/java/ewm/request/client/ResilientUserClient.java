@@ -1,6 +1,6 @@
 package ewm.request.client;
 
-import ewm.request.exception.ServiceUnavailableException;
+import ewm.common.exception.ServiceUnavailableException;
 import ewm.user.client.UserClient;
 import ewm.user.client.dto.UserDto;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
