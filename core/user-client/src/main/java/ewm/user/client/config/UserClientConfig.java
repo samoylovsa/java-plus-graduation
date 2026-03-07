@@ -1,21 +1,19 @@
-package ewm.config;
+package ewm.user.client.config;
 
 import ewm.common.exception.NotFoundException;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Slf4j
-@Configuration
-public class UserClientFeignConfig {
+public class UserClientConfig {
 
     private final ErrorDecoder defaultDecoder = new ErrorDecoder.Default();
 
     @Bean
-    public ErrorDecoder userServiceErrorDecoder() {
+    public ErrorDecoder userClientErrorDecoder() {
         return (methodKey, response) -> {
-            if (methodKey != null && methodKey.startsWith("UserClient#") && response.status() == 404) {
+            if (response.status() == 404) {
                 log.debug("User not found from user-service: {} -> 404", methodKey);
                 return new NotFoundException("User not found");
             }
