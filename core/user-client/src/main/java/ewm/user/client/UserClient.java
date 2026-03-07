@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "user-service")
+@FeignClient(name = "user-service", configuration = ewm.user.client.config.UserClientConfig.class)
 public interface UserClient {
 
     @GetMapping("/users/{id}")
