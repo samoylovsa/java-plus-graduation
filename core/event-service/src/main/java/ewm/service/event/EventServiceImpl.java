@@ -140,6 +140,7 @@ public class EventServiceImpl implements EventService {
 
         if (events.isEmpty()) return List.of();
 
+        Map<Long, Integer> confirmedRequestsForStats = null;
         if (request.getOnlyAvailable()) {
             List<Long> eventIds = events.stream().map(Event::getId).toList();
             Map<Long, Integer> confirmed = getConfirmedRequests(eventIds);
@@ -154,11 +155,12 @@ public class EventServiceImpl implements EventService {
             if (events.isEmpty()) {
                 return List.of();
             }
+            confirmedRequestsForStats = confirmed;
         }
 
         saveHit("/events", ip);
 
-        List<EventShortDto> result = getEventsShortDtoWithStats(events);
+        List<EventShortDto> result = getEventsShortDtoWithStats(events, confirmedRequestsForStats);
         return sortEvents(result, request.getSort());
     }
 
@@ -459,13 +461,19 @@ public class EventServiceImpl implements EventService {
     }
 
     private List<EventShortDto> getEventsShortDtoWithStats(List<Event> events) {
+        return getEventsShortDtoWithStats(events, null);
+    }
+
+    private List<EventShortDto> getEventsShortDtoWithStats(List<Event> events, Map<Long, Integer> confirmedRequestsCountOrNull) {
         List<Long> eventIds = events.stream().map(Event::getId).toList();
         List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
         List<UserDto> initiatorDtos = initiatorIds.isEmpty() ? List.of() : userClient.getUsersByIds(initiatorIds);
         if (initiatorDtos == null) initiatorDtos = Collections.emptyList();
         Map<Long, UserShortDto> initiatorMap = initiatorDtos.stream()
                 .collect(Collectors.toMap(UserDto::getId, this::toUserShortDto));
-        Map<Long, Integer> confirmedRequestsCount = getConfirmedRequests(eventIds);
+        Map<Long, Integer> confirmedRequestsCount = confirmedRequestsCountOrNull != null
+                ? confirmedRequestsCountOrNull
+                : getConfirmedRequests(eventIds);
         LocalDateTime startDate = getEarliestEventDate(events);
         Map<Long, Long> views = getViews(eventIds, startDate);
 
