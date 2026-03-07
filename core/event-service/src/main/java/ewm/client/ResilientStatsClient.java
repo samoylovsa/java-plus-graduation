@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component;
 import stats.client.StatsClient;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
-
 
 @Slf4j
 @Component
@@ -31,14 +29,9 @@ public class ResilientStatsClient {
         log.warn("stats-server unavailable, skipping saveHit: {}", t.getMessage());
     }
 
-    @CircuitBreaker(name = "statsServer", fallbackMethod = "getStatsFallback")
+    @CircuitBreaker(name = "statsServer")
     @Retry(name = "statsServer")
     public List<GetStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
         return statsClient.getStats(start, end, uris, unique);
-    }
-
-    public List<GetStatsDto> getStatsFallback(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique, Throwable t) {
-        log.warn("stats-server unavailable, using fallback (0 views): {}", t.getMessage());
-        return Collections.emptyList();
     }
 }

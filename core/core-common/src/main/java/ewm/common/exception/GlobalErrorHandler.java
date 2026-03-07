@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import feign.FeignException;
+
 import java.time.LocalDateTime;
 
 
@@ -152,6 +154,18 @@ public class GlobalErrorHandler {
                 HttpStatus.BAD_REQUEST,
                 "Incorrectly made request.",
                 ex.getMessage(),
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(FeignException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ApiError handleFeignException(FeignException ex) {
+        log.warn("Feign call failed: {}", ex.getMessage());
+        return new ApiError(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Required service is temporarily unavailable.",
+                ex.getMessage() != null ? ex.getMessage() : "Remote call failed",
                 LocalDateTime.now()
         );
     }
