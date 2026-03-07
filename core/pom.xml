@@ -19,7 +19,14 @@
     </properties>
 
     <modules>
-        <module>main-service</module>
+        <module>core-common</module>
+        <module>event-service</module>
+        <module>user-service</module>
+        <module>user-client</module>
+        <module>event-client</module>
+        <module>request-service</module>
+        <module>request-client</module>
+        <module>comment-service</module>
     </modules>
 
 </project>
