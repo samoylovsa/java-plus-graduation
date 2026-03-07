@@ -1,6 +1,6 @@
-package ewm.dto.comment;
+package ewm.comment.dto;
 
-import ewm.model.comment.CommentStatus;
+import ewm.comment.model.CommentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,3 +22,4 @@ public class CommentDto {
     private LocalDateTime created;
     private LocalDateTime updated;
 }
+

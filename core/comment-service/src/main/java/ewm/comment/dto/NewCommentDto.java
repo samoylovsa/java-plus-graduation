@@ -1,5 +1,6 @@
-package ewm.dto.comment;
+package ewm.comment.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateCommentDto {
+public class NewCommentDto {
+
+    @NotBlank
     @Size(min = 1, max = 2000)
     private String text;
+
+    private Long eventId;
 }
+

@@ -1,15 +1,15 @@
-package ewm.service.comment;
+package ewm.comment.service;
 
-
-import ewm.dto.comment.CommentDto;
-import ewm.dto.comment.CommentStatusUpdateDto;
-import ewm.dto.comment.NewCommentDto;
-import ewm.dto.comment.UpdateCommentDto;
-import ewm.model.comment.CommentStatus;
+import ewm.comment.dto.CommentDto;
+import ewm.comment.dto.CommentStatusUpdateDto;
+import ewm.comment.dto.NewCommentDto;
+import ewm.comment.dto.UpdateCommentDto;
+import ewm.comment.model.CommentStatus;
 
 import java.util.List;
 
 public interface CommentService {
+
     CommentDto createComment(Long userId, NewCommentDto newCommentDto);
 
     CommentDto updateComment(Long userId, Long commentId, UpdateCommentDto updateCommentDto);

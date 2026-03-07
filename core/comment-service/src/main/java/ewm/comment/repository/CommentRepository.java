@@ -1,7 +1,7 @@
-package ewm.repository.comment;
+package ewm.comment.repository;
 
-import ewm.model.comment.Comment;
-import ewm.model.comment.CommentStatus;
+import ewm.comment.model.Comment;
+import ewm.comment.model.CommentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +21,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c " +
             "WHERE (:status IS NULL OR c.status = :status) " +
-            "AND (:eventId IS NULL OR c.event.id = :eventId) " +
+            "AND (:eventId IS NULL OR c.eventId = :eventId) " +
             "AND (:userId IS NULL OR c.authorId = :userId)")
     List<Comment> findCommentsByFilters(@Param("status") CommentStatus status,
                                         @Param("eventId") Long eventId,

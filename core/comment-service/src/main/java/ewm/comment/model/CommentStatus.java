@@ -1,4 +1,4 @@
-package ewm.model.comment;
+package ewm.comment.model;
 
 public enum CommentStatus {
     PENDING,
@@ -6,3 +6,4 @@ public enum CommentStatus {
     REJECTED,
     DELETED
 }
+

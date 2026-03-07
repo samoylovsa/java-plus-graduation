@@ -24,6 +24,7 @@
         <module>user-client</module>
         <module>request-service</module>
         <module>request-client</module>
+        <module>comment-service</module>
     </modules>
 
 </project>
