@@ -1,6 +1,6 @@
 package ewm.user.mapper;
 
-import ewm.user.dto.UserDto;
+import ewm.user.client.dto.UserDto;
 import ewm.user.model.User;
 import org.mapstruct.Mapper;
 

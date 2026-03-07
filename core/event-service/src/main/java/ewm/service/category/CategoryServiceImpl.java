@@ -2,8 +2,8 @@ package ewm.service.category;
 
 import ewm.dto.category.CategoryDto;
 import ewm.dto.category.NewCategoryDto;
-import ewm.exception.ConflictException;
-import ewm.exception.NotFoundException;
+import ewm.common.exception.ConflictException;
+import ewm.common.exception.NotFoundException;
 import ewm.mapper.category.CategoryMapper;
 import ewm.model.category.Category;
 import ewm.repository.category.CategoryRepository;

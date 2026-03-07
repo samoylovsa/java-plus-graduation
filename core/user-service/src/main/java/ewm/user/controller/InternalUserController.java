@@ -1,6 +1,6 @@
 package ewm.user.controller;
 
-import ewm.user.dto.UserDto;
+import ewm.user.client.dto.UserDto;
 import ewm.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

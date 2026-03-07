@@ -1,8 +1,8 @@
 package ewm.user.service;
 
+import ewm.common.exception.NotFoundException;
+import ewm.user.client.dto.UserDto;
 import ewm.user.dto.AdminUserGetParams;
-import ewm.user.dto.UserDto;
-import ewm.user.exception.NotFoundException;
 import ewm.user.mapper.UserMapper;
 import ewm.user.model.User;
 import ewm.user.repository.UserRepository;

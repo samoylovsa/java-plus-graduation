@@ -1,8 +1,7 @@
-package ewm.comment.exception;
+package ewm.common.exception;
 
 public class AccessDeniedException extends RuntimeException {
     public AccessDeniedException(String message) {
         super(message);
     }
 }
-

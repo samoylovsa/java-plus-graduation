@@ -1,4 +1,4 @@
-package ewm.user.dto;
+package ewm.user.client.dto;
 
 import lombok.Data;
 

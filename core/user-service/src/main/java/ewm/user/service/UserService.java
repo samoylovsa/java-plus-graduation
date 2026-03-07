@@ -1,7 +1,7 @@
 package ewm.user.service;
 
+import ewm.user.client.dto.UserDto;
 import ewm.user.dto.AdminUserGetParams;
-import ewm.user.dto.UserDto;
 
 import java.util.List;
 
