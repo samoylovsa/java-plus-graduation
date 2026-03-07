@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = {
         "ewm.user.client",
-        "ewm.comment.eventclient"
+        "ewm.event.client"
 })
 public class CommentServiceApplication {
 
