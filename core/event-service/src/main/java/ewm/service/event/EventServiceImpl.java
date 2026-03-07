@@ -187,7 +187,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void saveHit(String path, String ip) {
-        SaveHitDto endpointHitDto = new SaveHitDto("main-service", path, ip, LocalDateTime.now());
+        SaveHitDto endpointHitDto = new SaveHitDto("event-service", path, ip, LocalDateTime.now());
         statsClient.saveHit(endpointHitDto);
     }
 
