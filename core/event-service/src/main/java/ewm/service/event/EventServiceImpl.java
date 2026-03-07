@@ -3,7 +3,9 @@ package ewm.service.event;
 import dto.GetStatsDto;
 import dto.SaveHitDto;
 import ewm.dto.event.*;
-import ewm.request.client.RequestClient;
+import ewm.client.ResilientRequestClient;
+import ewm.client.ResilientStatsClient;
+import ewm.client.ResilientUserClient;
 import ewm.request.client.dto.CountConfirmedRequestsByEventId;
 import ewm.exception.BusinessRuleException;
 import ewm.exception.ConflictException;
@@ -25,15 +27,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import stats.client.StatsClient;
-
 import java.util.Collections;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import ewm.user.client.UserClient;
 import ewm.user.client.dto.UserDto;
 
 @Service
@@ -42,11 +41,11 @@ import ewm.user.client.dto.UserDto;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
-    private final UserClient userClient;
+    private final ResilientUserClient userClient;
     private final CategoryRepository categoryRepository;
     private final EventMapper eventMapper;
-    private final RequestClient requestClient;
-    private final StatsClient statsClient;
+    private final ResilientRequestClient requestClient;
+    private final ResilientStatsClient statsClient;
 
     @Override
     @Transactional

@@ -11,9 +11,9 @@ import ewm.mapper.compilation.CompilationMapper;
 import ewm.mapper.event.EventMapper;
 import ewm.model.compilation.Compilation;
 import ewm.model.event.Event;
+import ewm.client.ResilientUserClient;
 import ewm.repository.compilation.CompilationRepository;
 import ewm.repository.event.EventRepository;
-import ewm.user.client.UserClient;
 import ewm.user.client.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -36,7 +36,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
     private final EventMapper eventMapper;
-    private final UserClient userClient;
+    private final ResilientUserClient userClient;
 
     @Override
     @Transactional
