@@ -1,10 +1,19 @@
 package ewm.user.client.config;
 
+import ewm.common.exception.AccessDeniedException;
+import ewm.common.exception.ConflictException;
 import ewm.common.exception.NotFoundException;
+import ewm.common.exception.ServiceUnavailableException;
+import ewm.common.exception.ValidationException;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 
+/**
+ * Маппинг ответов user-service в исключения:
+ * 400 → ValidationException, 403 → AccessDeniedException, 404 → NotFoundException,
+ * 409 → ConflictException, 5xx → ServiceUnavailableException.
+ */
 @Slf4j
 public class UserClientConfig {
 
@@ -13,12 +22,27 @@ public class UserClientConfig {
     @Bean
     public ErrorDecoder userClientErrorDecoder() {
         return (methodKey, response) -> {
-            if (response.status() == 404) {
-                log.debug("User not found from user-service: {} -> 404", methodKey);
+            int status = response.status();
+            String message = "user-service: " + response.reason();
+            if (status == 400) {
+                log.debug("user-service bad request: {} -> 400", methodKey);
+                return new ValidationException(message);
+            }
+            if (status == 403) {
+                log.debug("user-service forbidden: {} -> 403", methodKey);
+                return new AccessDeniedException(message);
+            }
+            if (status == 404) {
+                log.debug("user-service not found: {} -> 404", methodKey);
                 return new NotFoundException("User not found");
             }
-            if (response.status() >= 500) {
-                log.warn("user-service error: {} -> {}", methodKey, response.status());
+            if (status == 409) {
+                log.debug("user-service conflict: {} -> 409", methodKey);
+                return new ConflictException(message);
+            }
+            if (status >= 500) {
+                log.warn("user-service error: {} -> {}", methodKey, status);
+                return new ServiceUnavailableException(message);
             }
             return defaultDecoder.decode(methodKey, response);
         };
