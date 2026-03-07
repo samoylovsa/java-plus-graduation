@@ -4,7 +4,7 @@ import ewm.comment.dto.CommentDto;
 import ewm.comment.dto.CommentStatusUpdateDto;
 import ewm.comment.dto.NewCommentDto;
 import ewm.comment.dto.UpdateCommentDto;
-import ewm.comment.eventclient.EventClient;
+import ewm.event.client.EventClient;
 import ewm.comment.exception.AccessDeniedException;
 import ewm.comment.exception.NotFoundException;
 import ewm.comment.mapper.CommentMapper;

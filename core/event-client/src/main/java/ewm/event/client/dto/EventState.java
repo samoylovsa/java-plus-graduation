@@ -1,4 +1,4 @@
-package ewm.request.eventclient;
+package ewm.event.client.dto;
 
 public enum EventState {
     PENDING,

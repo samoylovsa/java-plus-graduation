@@ -1,4 +1,4 @@
-package ewm.request.eventclient;
+package ewm.event.client.dto;
 
 import lombok.Data;
 
@@ -11,4 +11,3 @@ public class InternalEventDto {
     private Boolean requestModeration;
     private EventState state;
 }
-

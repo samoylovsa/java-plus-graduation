@@ -8,7 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients(basePackages = {
-        "ewm.request.eventclient",
+        "ewm.event.client",
         "ewm.user.client"
 })
 public class RequestServiceApplication {
