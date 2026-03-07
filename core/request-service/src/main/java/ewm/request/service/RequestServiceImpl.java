@@ -4,9 +4,10 @@ import ewm.request.client.dto.CountConfirmedRequestsByEventId;
 import ewm.request.dto.UpdateStatusRequestDtoReq;
 import ewm.request.dto.UpdateStatusRequestDtoResp;
 import ewm.request.dto.UserRequestDto;
-import ewm.event.client.EventClient;
 import ewm.event.client.dto.EventState;
 import ewm.event.client.dto.InternalEventDto;
+import ewm.request.client.ResilientEventClient;
+import ewm.request.client.ResilientUserClient;
 import ewm.request.mapper.RequestMapper;
 import ewm.request.exception.ConflictException;
 import ewm.request.exception.NotFoundException;
@@ -14,7 +15,6 @@ import ewm.request.exception.ValidationException;
 import ewm.request.model.Request;
 import ewm.request.model.RequestStatus;
 import ewm.request.repository.RequestRepository;
-import ewm.user.client.UserClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +30,8 @@ public class RequestServiceImpl implements RequestService {
 
     private final RequestRepository requestRepository;
     private final RequestMapper requestMapper;
-    private final UserClient userClient;
-    private final EventClient eventClient;
+    private final ResilientUserClient userClient;
+    private final ResilientEventClient eventClient;
 
     @Override
     public List<UserRequestDto> getRequestsByUser(Long userId) {

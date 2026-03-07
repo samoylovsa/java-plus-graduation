@@ -4,14 +4,14 @@ import ewm.comment.dto.CommentDto;
 import ewm.comment.dto.CommentStatusUpdateDto;
 import ewm.comment.dto.NewCommentDto;
 import ewm.comment.dto.UpdateCommentDto;
-import ewm.event.client.EventClient;
+import ewm.comment.client.ResilientEventClient;
+import ewm.comment.client.ResilientUserClient;
 import ewm.comment.exception.AccessDeniedException;
 import ewm.comment.exception.NotFoundException;
 import ewm.comment.mapper.CommentMapper;
 import ewm.comment.model.Comment;
 import ewm.comment.model.CommentStatus;
 import ewm.comment.repository.CommentRepository;
-import ewm.user.client.UserClient;
 import ewm.user.client.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
-    private final UserClient userClient;
-    private final EventClient eventClient;
+    private final ResilientUserClient userClient;
+    private final ResilientEventClient eventClient;
     private final CommentMapper commentMapper;
 
     @Override

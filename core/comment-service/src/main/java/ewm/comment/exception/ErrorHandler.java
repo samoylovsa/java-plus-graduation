@@ -152,5 +152,17 @@ public class ErrorHandler {
             LocalDateTime.now()
         );
     }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ApiError handleServiceUnavailable(ServiceUnavailableException ex) {
+        log.warn("Dependency unavailable: {}", ex.getMessage());
+        return new ApiError(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Required service is temporarily unavailable.",
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+    }
 }
 
