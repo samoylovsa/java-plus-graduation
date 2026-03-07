@@ -9,11 +9,6 @@ import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 
-/**
- * Маппинг ответов user-service в исключения:
- * 400 → ValidationException, 403 → AccessDeniedException, 404 → NotFoundException,
- * 409 → ConflictException, 5xx → ServiceUnavailableException.
- */
 @Slf4j
 public class UserClientConfig {
 

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,14 +17,9 @@ public class ResilientRequestClient {
 
     private final RequestClient requestClient;
 
-    @CircuitBreaker(name = "requestService", fallbackMethod = "countConfirmedRequestsByEventIdsFallback")
+    @CircuitBreaker(name = "requestService")
     @Retry(name = "requestService")
     public List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(List<Long> eventIds) {
         return requestClient.countConfirmedRequestsByEventIds(eventIds);
-    }
-
-    public List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIdsFallback(List<Long> eventIds, Throwable t) {
-        log.warn("request-service unavailable, using fallback (0 confirmed): {}", t.getMessage());
-        return List.of();
     }
 }
