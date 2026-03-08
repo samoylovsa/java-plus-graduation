@@ -49,6 +49,9 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto updateCategory(Long catId, CategoryDto categoryDto) {
         Category existingCategory = getCategoryEntity(catId);
+        if (categoryRepository.existsByNameAndIdNot(categoryDto.getName(), catId)) {
+            throw new ConflictException("Category name already exists");
+        }
         existingCategory.setName(categoryDto.getName());
         Category updatedCategory = categoryRepository.save(existingCategory);
         return categoryMapper.toDto(updatedCategory);
