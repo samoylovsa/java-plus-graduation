@@ -22,4 +22,11 @@ public class ResilientRequestClient {
     public List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(List<Long> eventIds) {
         return requestClient.countConfirmedRequestsByEventIds(eventIds);
     }
+
+    @CircuitBreaker(name = "requestService")
+    @Retry(name = "requestService")
+    public boolean userHasVisitedEvent(Long userId, Long eventId) {
+        return requestClient.hasUserVisitedEvent(userId, eventId);
+    }
+
 }

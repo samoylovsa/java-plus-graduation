@@ -21,5 +21,11 @@ public class InternalRequestController {
     public List<CountConfirmedRequestsByEventId> getConfirmedCounts(@RequestParam("eventIds") List<Long> eventIds) {
         return requestService.countConfirmedRequestsByEventIds(eventIds);
     }
+
+    @GetMapping("/visited")
+    public boolean hasUserVisitedEvent(@RequestParam("userId") Long userId,
+                                       @RequestParam("eventId") Long eventId) {
+        return requestService.userHasVisitedEvent(userId, eventId);
+    }
 }
 

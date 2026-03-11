@@ -14,13 +14,13 @@ public class EventShortDto {
     private Long id;
     private String title;
     private String annotation;
-    private CategoryDto category; // id, name
+    private CategoryDto category;
     private Boolean paid;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    private UserShortDto initiator; // id, name
-    private Integer confirmedRequests; // пока 0
-    private Long views; // пока 0
+    private UserShortDto initiator;
+    private Integer confirmedRequests;
+    private Double rating;
 }

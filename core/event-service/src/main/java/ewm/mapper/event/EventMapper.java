@@ -40,7 +40,7 @@ public class EventMapper {
         return event;
     }
 
-    public EventFullDto toFullDto(Event event, int confirmedRequests, long views, UserShortDto initiator) {
+    public EventFullDto toFullDto(Event event, int confirmedRequests, double rating, UserShortDto initiator) {
         EventFullDto eventFullDto = new EventFullDto();
         eventFullDto.setId(event.getId());
         eventFullDto.setTitle(event.getTitle());
@@ -68,12 +68,12 @@ public class EventMapper {
         eventFullDto.setLocation(locationDto);
 
         eventFullDto.setConfirmedRequests(confirmedRequests);
-        eventFullDto.setViews(views);
+        eventFullDto.setRating(rating);
 
         return eventFullDto;
     }
 
-    public EventShortDto toShortDto(Event event, int confirmedRequests, long views, UserShortDto initiator) {
+    public EventShortDto toShortDto(Event event, int confirmedRequests, double rating, UserShortDto initiator) {
         EventShortDto eventShortDto = new EventShortDto();
         eventShortDto.setId(event.getId());
         eventShortDto.setTitle(event.getTitle());
@@ -89,7 +89,7 @@ public class EventMapper {
         eventShortDto.setInitiator(initiator);
 
         eventShortDto.setConfirmedRequests(confirmedRequests);
-        eventShortDto.setViews(views);
+        eventShortDto.setRating(rating);
         return eventShortDto;
     }
 
