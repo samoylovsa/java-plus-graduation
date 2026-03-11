@@ -63,3 +63,11 @@ resilience4j:
       eventService:
         maxAttempts: 2
         waitDuration: 500ms
+
+grpc:
+  client:
+    collector:
+      address: 'discovery:///collector'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext

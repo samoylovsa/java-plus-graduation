@@ -18,6 +18,8 @@ import ewm.request.repository.RequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.stats.proto.ActionTypeProto;
+import stats.client.UserActionGrpcClient;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestMapper requestMapper;
     private final ResilientUserClient userClient;
     private final ResilientEventClient eventClient;
+    private final UserActionGrpcClient userActionGrpcClient;
 
     @Override
     public List<UserRequestDto> getRequestsByUser(Long userId) {
@@ -51,6 +54,14 @@ public class RequestServiceImpl implements RequestService {
 
         Request request = createRequest(userId, eventId, event);
         request = requestRepository.save(request);
+
+        userActionGrpcClient.collectUserAction(
+                userId,
+                eventId,
+                ActionTypeProto.ACTION_REGISTER,
+                LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant()
+        );
+
         return requestMapper.toDto(request);
     }
 
@@ -100,6 +111,12 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(List<Long> eventIds) {
         return requestRepository.countConfirmedRequestsByEventIds(eventIds);
+    }
+
+    @Override
+    public boolean userHasVisitedEvent(Long userId, Long eventId) {
+        List<Request> requests = requestRepository.findAllByEventIdAndRequesterId(eventId, userId);
+        return requests.stream().anyMatch(r -> r.getStatus() == RequestStatus.CONFIRMED);
     }
 
     private void validateRequestCreation(Long userId, Long eventId, InternalEventDto event) {

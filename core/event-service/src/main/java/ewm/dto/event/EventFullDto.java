@@ -18,7 +18,7 @@ public class EventFullDto {
     private String annotation;
     private String description;
 
-    private CategoryDto category; // {id, name}
+    private CategoryDto category;
 
     private Boolean paid;
 
@@ -36,10 +36,11 @@ public class EventFullDto {
 
     private EventState state;
 
-    private UserShortDto initiator; // {id, name} добавить когда будет дто
+    private UserShortDto initiator;
 
     private LocationDto location;
 
-    private Integer confirmedRequests; // пока 0
-    private Long views; // пока 0
+    private Integer confirmedRequests;
+
+    private Double rating;
 }

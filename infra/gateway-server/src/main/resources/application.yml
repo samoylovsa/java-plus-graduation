@@ -13,6 +13,17 @@ spring:
         enabled: true
         service-id: config-server
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true
+    health:
+      show-details: always
+
 eureka:
   client:
     serviceUrl:

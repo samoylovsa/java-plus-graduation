@@ -24,4 +24,6 @@ public interface RequestService {
     UpdateStatusRequestDtoResp updateRequestStatus(Long userId, Long eventId, UpdateStatusRequestDtoReq request);
 
     List<CountConfirmedRequestsByEventId> countConfirmedRequestsByEventIds(List<Long> eventIds);
+
+    boolean userHasVisitedEvent(Long userId, Long eventId);
 }
