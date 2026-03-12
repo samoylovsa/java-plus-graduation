@@ -27,6 +27,9 @@
             <plugin>
                 <groupId>io.github.ascopes</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
+                <configuration>
+                    <protocVersion>3.25.3</protocVersion>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
