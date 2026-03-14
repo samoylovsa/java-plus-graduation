@@ -29,6 +29,13 @@
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <configuration>
                     <protocVersion>3.25.3</protocVersion>
+                    <plugins>
+                        <plugin kind="binary-maven">
+                            <groupId>io.grpc</groupId>
+                            <artifactId>protoc-gen-grpc-java</artifactId>
+                            <version>1.78.0</version>
+                        </plugin>
+                    </plugins>
                 </configuration>
                 <executions>
                     <execution>

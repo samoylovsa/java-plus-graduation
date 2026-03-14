@@ -6,11 +6,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.practicum.ewm.stats.proto.RecommendationsControllerGrpc;
-import ru.practicum.ewm.stats.proto.RecommendedEventProto;
-import ru.practicum.ewm.stats.proto.InteractionsCountRequestProto;
-import ru.practicum.ewm.stats.proto.SimilarEventsRequestProto;
-import ru.practicum.ewm.stats.proto.UserPredictionsRequestProto;
+import ru.practicum.ewm.stats.proto.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
